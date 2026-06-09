@@ -16,16 +16,22 @@ model User {
 
   holdings     Holding[]
   transactions Transaction[]
+  portfolioSnapshots PortfolioSnapshot[] 
 }
 
 model Holding {
-  id          Int    @id @default(autoincrement())
+
+  id          Int     @id @default(autoincrement())
 
   coin        String
+
   quantity    Float
 
+  avgBuyPrice Float @default(0)
+
   userId      Int
-  user        User   @relation(fields: [userId], references: [id])
+
+  user        User    @relation(fields: [userId],references: [id])
 }
 
 model Transaction {
@@ -40,4 +46,16 @@ model Transaction {
   user        User     @relation(fields: [userId], references: [id])
 
   createdAt   DateTime @default(now())
+}
+model PortfolioSnapshot {
+
+  id        Int      @id @default(autoincrement())
+
+  value     Float
+
+  userId    Int
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
 }

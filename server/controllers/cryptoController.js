@@ -67,26 +67,54 @@ const buyCrypto = async (req, res) => {
 
     if (existingHolding) {
 
-      await prisma.holding.update({
-        where: {
-          id: existingHolding.id
-        },
-        data: {
-          quantity:
-            existingHolding.quantity + quantity
-        }
-      });
+  const totalOldInvestment =
+    existingHolding.quantity *
+    existingHolding.avgBuyPrice;
 
-    } else {
+  const totalNewInvestment =
+    quantity * coinPrice;
 
-      await prisma.holding.create({
-        data: {
-          coin,
-          quantity,
-          userId
-        }
-      });
+  const newQuantity =
+    existingHolding.quantity + quantity;
+
+  const newAvgBuyPrice =
+    (
+      totalOldInvestment +
+      totalNewInvestment
+    ) / newQuantity;
+
+  await prisma.holding.update({
+
+    where: {
+      id: existingHolding.id
+    },
+
+    data: {
+
+      quantity: newQuantity,
+
+      avgBuyPrice: newAvgBuyPrice
     }
+
+  });
+
+} else {
+
+  await prisma.holding.create({
+
+    data: {
+
+      coin,
+
+      quantity,
+
+      avgBuyPrice: coinPrice,
+
+      userId
+    }
+
+  });
+}
 
     await prisma.transaction.create({
       data: {
@@ -97,6 +125,37 @@ const buyCrypto = async (req, res) => {
         userId
       }
     });
+    const updatedHoldings =
+  await prisma.holding.findMany({
+    where: {
+      userId
+    }
+  });
+
+const updatedPrices =
+  await fetchCryptoPrices();
+
+let portfolioValue = 0;
+
+updatedHoldings.forEach((holding) => {
+
+  portfolioValue +=
+    holding.quantity *
+    updatedPrices[holding.coin].inr;
+
+});
+
+await prisma.portfolioSnapshot.create({
+
+  data: {
+
+    userId,
+
+    value: portfolioValue
+
+  }
+
+});
 
     res.json({
       message: "Crypto purchased successfully"
@@ -162,10 +221,12 @@ const sellCrypto = async (req, res) => {
     });
 
     const remainingQuantity =
-      holding.quantity - quantity;
+  parseFloat(
+    (holding.quantity - quantity).toFixed(8)
+  );
 
-    if (remainingQuantity === 0) {
-
+    if (remainingQuantity <= 0) {
+console.log(holding);
       await prisma.holding.delete({
         where: {
           id: holding.id
@@ -193,7 +254,37 @@ const sellCrypto = async (req, res) => {
         userId
       }
     });
+const updatedHoldings =
+  await prisma.holding.findMany({
+    where: {
+      userId
+    }
+  });
 
+const updatedPrices =
+  await fetchCryptoPrices();
+
+let portfolioValue = 0;
+
+updatedHoldings.forEach((holding) => {
+
+  portfolioValue +=
+    holding.quantity *
+    updatedPrices[holding.coin].inr;
+
+});
+
+await prisma.portfolioSnapshot.create({
+
+  data: {
+
+    userId,
+
+    value: portfolioValue
+
+  }
+
+});
     res.json({
       message: "Crypto sold successfully"
     });
@@ -230,14 +321,26 @@ const getPortfolio = async (req, res) => {
 
       const currentValue =
         currentPrice * holding.quantity;
+const investedValue =holding.avgBuyPrice *holding.quantity;
 
+  const profitLoss =currentValue -investedValue;
       totalPortfolioValue += currentValue;
 
       return {
         coin: holding.coin,
-        quantity: holding.quantity,
-        currentPrice,
-        currentValue
+
+    quantity: holding.quantity,
+
+    avgBuyPrice:
+      holding.avgBuyPrice,
+
+    currentPrice,
+
+    investedValue,
+
+    currentValue,
+
+    profitLoss
       };
     });
 
@@ -293,10 +396,49 @@ const getTransactions = async (req, res) => {
     });
   }
 };
+const getPortfolioHistory = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const userId =
+      req.user.userId;
+
+    const history =
+      await prisma.portfolioSnapshot.findMany({
+
+        where: {
+          userId
+        },
+
+        orderBy: {
+          createdAt: "asc"
+        }
+
+      });
+
+    res.json({
+      history
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server error"
+    });
+
+  }
+
+};
 module.exports = {
   getPrices,
   buyCrypto,
   sellCrypto,
   getPortfolio,
-  getTransactions
+  getTransactions,
+  getPortfolioHistory
 };

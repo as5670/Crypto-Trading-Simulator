@@ -7,7 +7,8 @@ const {
   buyCrypto,
   sellCrypto,
   getPortfolio,
-  getTransactions
+  getTransactions,
+  getPortfolioHistory
 } = require("../controllers/cryptoController");
 const authMiddleware = require("../middleware/authMiddleware");
 router.get("/prices", getPrices);
@@ -31,5 +32,10 @@ router.get(
   "/transactions",
   authMiddleware,
   getTransactions
+);
+router.get(
+  "/portfolio-history",
+  authMiddleware,
+  getPortfolioHistory
 );
 module.exports = router;
