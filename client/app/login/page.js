@@ -154,7 +154,7 @@ export default function LoginPage() {
     if (!email || !password) return setError("Please fill in all fields.");
     setError(""); setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("https://crypto-trading-backend-6yvb.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

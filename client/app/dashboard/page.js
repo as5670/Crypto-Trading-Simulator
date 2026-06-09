@@ -137,14 +137,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!mounted) return;
-    const socket = io("http://localhost:5000");
+    const socket = io("https://crypto-trading-backend-6yvb.onrender.com");
     socket.on("priceUpdate", (updatedPrices) => {setPrices(updatedPrices); fetchPortfolio()});
     return () => { socket.disconnect(); };
   }, [mounted]);
 
   const fetchPrices = async () => {
     try {
-      const res = await fetch("http://localhost:5000/prices");
+      const res = await fetch("https://crypto-trading-backend-6yvb.onrender.com/prices");
       setPrices(await res.json());
     } catch (e) { console.log(e); }
   };
@@ -152,7 +152,7 @@ export default function DashboardPage() {
   const fetchPortfolio = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/portfolio", {
+      const res = await fetch("https://crypto-trading-backend-6yvb.onrender.com/portfolio", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPortfolio(await res.json());
@@ -162,7 +162,7 @@ export default function DashboardPage() {
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/transactions", {
+      const res = await fetch("https://crypto-trading-backend-6yvb.onrender.com/transactions", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -179,7 +179,7 @@ const fetchPortfolioHistory =
 
       const response =
         await fetch(
-          "http://localhost:5000/portfolio-history",
+          "https://crypto-trading-backend-6yvb.onrender.com/portfolio-history",
           {
             headers: {
               Authorization:
@@ -207,7 +207,7 @@ const fetchPortfolioHistory =
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/buy", {
+      const res = await fetch("https://crypto-trading-backend-6yvb.onrender.com/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ coin: selectedCoin, quantity: Number(quantity) })
@@ -226,7 +226,7 @@ const fetchPortfolioHistory =
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/sell", {
+      const res = await fetch("https://crypto-trading-backend-6yvb.onrender.com/sell", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ coin: selectedCoin, quantity: Number(quantity) })
