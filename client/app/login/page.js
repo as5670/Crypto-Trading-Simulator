@@ -154,14 +154,15 @@ export default function LoginPage() {
     if (!email || !password) return setError("Please fill in all fields.");
     setError(""); setLoading(true);
     try {
-      const response = await fetch("https://crypto-trading-backend-6yvb.onrender.com/login", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        credentials: "include"
       });
       const data = await response.json();
       if (!response.ok) { setError(data.message || "Login failed."); setLoading(false); return; }
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("loggedIn", "true");
       window.location.href = "/dashboard";
     } catch (e) {
       setError("Unable to connect. Try again."); setLoading(false);

@@ -161,7 +161,7 @@ export default function SignupPage() {
     if (password.length < 6) return setError("Password must be at least 6 characters.");
     setError(""); setLoading(true);
     try {
-      const response = await fetch("https://crypto-trading-backend-6yvb.onrender.com/signup", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
