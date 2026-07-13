@@ -1,0 +1,498 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+.dash-root {
+  min-height: 100vh;
+  background: #0d0c09;
+  color: #f5f0e8;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.dash-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.ambient {
+  position: fixed;
+  top: -30vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  height: 60vh;
+  background: radial-gradient(ellipse, rgba(212,175,55,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 48px 80px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 56px;
+  border-bottom: 1px solid rgba(212,175,55,0.25);
+  padding-bottom: 28px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #d4af37;
+  opacity: 0.7;
+}
+
+.header-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #f5f0e8;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.header-title span {
+  color: #d4af37;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #a89878;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #22c55e; }
+  50% { opacity: 0.5; box-shadow: 0 0 3px #22c55e; }
+}
+
+.btn-logout {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(212,175,55,0.25);
+  color: #a89878;
+  padding: 9px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  border-color: #d4af37;
+  color: #d4af37;
+  background: rgba(212,175,55,0.15);
+}
+
+.ticker-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.ticker-card {
+  background: #1c1a12;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+}
+
+.ticker-card:hover {
+  border-color: rgba(212,175,55,0.25);
+}
+
+.ticker-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.coin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ticker-name {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: capitalize;
+  color: #f5f0e8;
+}
+
+.ticker-symbol {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #5a5040;
+  margin-top: 2px;
+  letter-spacing: 0.08em;
+}
+
+.ticker-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 17px;
+  font-weight: 500;
+  color: #f0d060;
+  letter-spacing: -0.02em;
+}
+
+.trade-bar {
+  background: #1c1a12;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.trade-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #5a5040;
+  white-space: nowrap;
+}
+
+.trade-select {
+  background: #141208;
+  border: 1px solid rgba(255,255,255,0.07);
+  color: #f5f0e8;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-width: 130px;
+}
+
+.trade-select:focus {
+  border-color: rgba(212,175,55,0.25);
+}
+
+.trade-input {
+  background: #141208;
+  border: 1px solid rgba(255,255,255,0.07);
+  color: #f5f0e8;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  outline: none;
+  width: 140px;
+  transition: border-color 0.2s;
+}
+
+.trade-input::placeholder {
+  color: #5a5040;
+}
+
+.trade-input:focus {
+  border-color: rgba(212,175,55,0.25);
+}
+
+.trade-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255,255,255,0.07);
+  margin: 0 4px;
+}
+
+.btn-buy, .btn-sell {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 11px 28px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-buy {
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.35);
+  color: #22c55e;
+}
+
+.btn-buy:hover:not(:disabled) {
+  background: rgba(34,197,94,0.25);
+  box-shadow: 0 0 16px rgba(34,197,94,0.2);
+}
+
+.btn-sell {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #ef4444;
+}
+
+.btn-sell:hover:not(:disabled) {
+  background: rgba(239,68,68,0.22);
+  box-shadow: 0 0 16px rgba(239,68,68,0.15);
+}
+
+.btn-buy:disabled, .btn-sell:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 28px;
+  align-items: start;
+}
+
+.card {
+  background: #1c1a12;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 22px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #f5f0e8;
+  letter-spacing: 0.02em;
+}
+
+.card-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #d4af37;
+  background: rgba(212,175,55,0.15);
+  border: 1px solid rgba(212,175,55,0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.portfolio-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 20px 28px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.stat-cell {
+  background: #141208;
+  padding: 16px 20px;
+}
+
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #5a5040;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: #f0d060;
+  letter-spacing: -0.03em;
+}
+
+.holdings-list {
+  padding: 0 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.holding-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #141208;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.holding-row:hover {
+  border-color: rgba(212,175,55,0.25);
+}
+
+.holding-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.holding-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+  color: #f5f0e8;
+}
+
+.holding-qty {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #a89878;
+  margin-top: 2px;
+}
+
+.holding-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: #f0d060;
+  font-weight: 500;
+}
+
+.chart-wrap {
+  padding: 20px 16px 24px;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tx-table thead th {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5a5040;
+  padding: 14px 20px;
+  text-align: left;
+  background: #141208;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-weight: 400;
+}
+
+.tx-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.15s;
+}
+
+.tx-table tbody tr:hover {
+  background: rgba(212,175,55,0.03);
+}
+
+.tx-table tbody td {
+  padding: 13px 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #a89878;
+}
+
+.tx-coin {
+  text-transform: capitalize;
+  color: #f5f0e8 !important;
+  font-weight: 500;
+}
+
+.tx-buy {
+  color: #22c55e !important;
+}
+
+.tx-sell {
+  color: #ef4444 !important;
+}
+
+.tx-price {
+  color: #f0d060 !important;
+}
+
+.tx-time {
+  font-size: 11px;
+  color: #5a5040 !important;
+}
+
+.coin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #5a5040;
+}
