@@ -168,7 +168,22 @@ export default function SignupPage() {
       });
       const data = await response.json();
       if (!response.ok) { setError(data.message || "Signup failed."); setLoading(false); return; }
-      window.location.href = "/login";
+      // Auto login after successful signup
+      const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include"
+      });
+      
+      if (!loginRes.ok) {
+        // Fallback: if auto-login fails, redirect to manually login page
+        window.location.href = "/login";
+        return;
+      }
+
+      localStorage.setItem("loggedIn", "true");
+      window.location.href = "/dashboard";
     } catch (e) {
       setError("Unable to connect. Try again."); setLoading(false);
     }

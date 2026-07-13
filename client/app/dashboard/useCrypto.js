@@ -155,9 +155,12 @@ export default function useCrypto() {
   };
 
   const portfolioChartData = portfolioHistory.map((item) => ({
-    date: new Date(item.createdAt).toLocaleDateString([], {
+    date: new Date(item.createdAt).toLocaleString([], {
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
+      second: "2-digit"
     }),
     value: item.value
   }));
