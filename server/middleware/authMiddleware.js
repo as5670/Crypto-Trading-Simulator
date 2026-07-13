@@ -1,18 +1,34 @@
 const jwt = require("jsonwebtoken");
 
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce((acc, cookie) => {
+    const parts = cookie.split('=');
+    const key = parts[0].trim();
+    const val = parts.slice(1).join('=').trim();
+    acc[key] = val;
+    return acc;
+  }, {});
+};
+
 const authMiddleware = (req, res, next) => {
-
   try {
+    let token = null;
 
-    const authHeader = req.headers.authorization;
+    if (req.headers.cookie) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies.token;
+    }
 
-    if (!authHeader) {
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
       return res.status(401).json({
         message: "No token provided"
       });
     }
-
-    const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(
       token,
