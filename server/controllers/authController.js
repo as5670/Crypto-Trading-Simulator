@@ -7,6 +7,12 @@ const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Please fill in all fields"
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
@@ -14,6 +20,14 @@ const signup = async (req, res) => {
         name,
         email,
         password: hashedPassword
+      }
+    });
+
+    // Create an initial portfolio snapshot of value 0
+    await prisma.portfolioSnapshot.create({
+      data: {
+        userId: user.id,
+        value: 0
       }
     });
 
@@ -25,6 +39,12 @@ const signup = async (req, res) => {
 
   } catch (error) {
     console.log(error);
+
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        message: "Email is already registered"
+      });
+    }
 
     res.status(500).json({
       message: "Server error"

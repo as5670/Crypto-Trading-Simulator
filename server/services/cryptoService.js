@@ -2,10 +2,25 @@ const axios = require("axios");
 
 let cachedPrices = {};
 
-const MOCK_PRICES = {
-  bitcoin: { inr: 8100000 },
-  ethereum: { inr: 300000 },
-  solana: { inr: 12000 }
+const BASE_PRICES = {
+  bitcoin: 8100000,
+  ethereum: 300000,
+  solana: 12000
+};
+
+let currentMockPrices = {
+  bitcoin: { inr: BASE_PRICES.bitcoin },
+  ethereum: { inr: BASE_PRICES.ethereum },
+  solana: { inr: BASE_PRICES.solana }
+};
+
+const getFluctuatedMockPrices = () => {
+  // Apply a small random fluctuation (-0.1% to +0.1%) to make the mock prices feel "live"
+  for (const coin in currentMockPrices) {
+    const changePercent = (Math.random() - 0.5) * 0.002;
+    currentMockPrices[coin].inr = Math.round(currentMockPrices[coin].inr * (1 + changePercent));
+  }
+  return currentMockPrices;
 };
 
 const fetchCryptoPrices = async () => {
@@ -34,11 +49,11 @@ const fetchCryptoPrices = async () => {
     console.warn("CoinGecko API error, using fallback prices:", error.message);
   }
 
-  // Fallback chain: cached prices -> mock prices
+  // Fallback chain: cached prices -> fluctuated mock prices
   if (Object.keys(cachedPrices).length > 0) {
     return cachedPrices;
   }
-  return MOCK_PRICES;
+  return getFluctuatedMockPrices();
 };
 
 module.exports = {
