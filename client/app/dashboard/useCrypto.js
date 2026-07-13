@@ -32,6 +32,7 @@ export default function useCrypto() {
     socket.on("priceUpdate", (updatedPrices) => {
       setPrices(updatedPrices);
       fetchPortfolio();
+      fetchPortfolioHistory();
     });
     return () => { socket.disconnect(); };
   }, [mounted]);
