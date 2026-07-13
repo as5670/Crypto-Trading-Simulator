@@ -114,7 +114,7 @@ export default function DashboardPage() {
                     />
                     <XAxis
                       dataKey="date"
-                      tick={{ fill: "#5a5040", fontFamily: "DM Mono", fontSize: 11 }}
+                      tick={false}
                       axisLine={{ stroke: "rgba(255,255,255,0.07)" }}
                       tickLine={false}
                     />

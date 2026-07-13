@@ -308,6 +308,24 @@ const getPortfolio = async (req, res) => {
       }
     });
 
+    // Plan A: Lazy Snapshotting on Page Load (every 5 minutes)
+    const lastSnapshot = await prisma.portfolioSnapshot.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+
+    if (!lastSnapshot || lastSnapshot.createdAt < fiveMinutesAgo) {
+      await prisma.portfolioSnapshot.create({
+        data: {
+          userId,
+          value: totalPortfolioValue
+        }
+      });
+    }
+
     res.json({
       balance: Number(user.balance),
       totalPortfolioValue,
