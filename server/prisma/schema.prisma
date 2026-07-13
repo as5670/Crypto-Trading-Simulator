@@ -12,7 +12,7 @@ model User {
   name         String
   email        String        @unique
   password     String
-  balance      Float         @default(100000)
+  balance      Decimal       @default(100000)
 
   holdings     Holding[]
   transactions Transaction[]
@@ -27,7 +27,7 @@ model Holding {
 
   quantity    Float
 
-  avgBuyPrice Float @default(0)
+  avgBuyPrice Decimal @default(0)
 
   userId      Int
 
@@ -39,7 +39,7 @@ model Transaction {
 
   coin        String
   quantity    Float
-  price       Float
+  price       Decimal
   type        String
 
   userId      Int
@@ -51,7 +51,7 @@ model PortfolioSnapshot {
 
   id        Int      @id @default(autoincrement())
 
-  value     Float
+  value     Decimal
 
   userId    Int
 
