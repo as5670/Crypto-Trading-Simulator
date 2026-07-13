@@ -17,18 +17,33 @@ const app = express();
 
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://crypto-trading-simulator-psi.vercel.app"
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const clientUrl = process.env.CLIENT_URL;
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith(".vercel.app") ||
+                      (clientUrl && origin === clientUrl.replace(/\/$/, ""));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, false); // Block other origins safely without crashing
+    }
+  },
+  credentials: true
+};
+
 const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    credentials: true
-  }
+  cors: corsOptions
 });
 
 socketHandler(io);
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/", cryptoRoutes);
