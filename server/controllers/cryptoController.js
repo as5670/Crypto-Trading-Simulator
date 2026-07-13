@@ -23,285 +23,256 @@ const getPrices = async (req, res) => {
 };
 
 const buyCrypto = async (req, res) => {
-
   try {
-
     const userId = req.user.userId;
-
     const { coin, quantity } = req.body;
 
+    const ALLOWED_COINS = ["bitcoin", "ethereum", "solana"];
+    if (!coin || !ALLOWED_COINS.includes(coin.toLowerCase())) {
+      return res.status(400).json({
+        message: "Invalid coin. Supported coins are bitcoin, ethereum, solana."
+      });
+    }
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({
+        message: "Invalid quantity"
+      });
+    }
+
+    const coinLower = coin.toLowerCase();
     const prices = await fetchCryptoPrices();
-
-    const coinPrice = prices[coin].inr;
-
+    const coinPrice = prices[coinLower].inr;
     const totalCost = coinPrice * quantity;
 
+    // Fetch user and existing holdings
     const user = await prisma.user.findUnique({
-      where: {
-        id: userId
-      }
+      where: { id: userId }
     });
 
-    if (user.balance < totalCost) {
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
 
+    const userBalance = Number(user.balance);
+    if (userBalance < totalCost) {
       return res.status(400).json({
         message: "Insufficient balance"
       });
     }
 
-    await prisma.user.update({
+    const existingHolding = await prisma.holding.findUnique({
       where: {
-        id: userId
-      },
-      data: {
-        balance: user.balance - totalCost
+        userId_coin: {
+          userId,
+          coin: coinLower
+        }
       }
     });
 
-    const existingHolding = await prisma.holding.findFirst({
-      where: {
-        userId,
-        coin
-      }
+    // Calculate new holding avgBuyPrice and quantity
+    const existingQty = existingHolding ? existingHolding.quantity : 0;
+    const existingAvgBuy = existingHolding ? Number(existingHolding.avgBuyPrice) : 0;
+    const newQuantity = existingQty + quantity;
+    const newAvgBuyPrice = (existingQty * existingAvgBuy + quantity * coinPrice) / newQuantity;
+
+    // Calculate current portfolio value from all holdings (excluding balance)
+    const holdings = await prisma.holding.findMany({
+      where: { userId }
     });
 
-    if (existingHolding) {
-
-  const totalOldInvestment =
-    existingHolding.quantity *
-    existingHolding.avgBuyPrice;
-
-  const totalNewInvestment =
-    quantity * coinPrice;
-
-  const newQuantity =
-    existingHolding.quantity + quantity;
-
-  const newAvgBuyPrice =
-    (
-      totalOldInvestment +
-      totalNewInvestment
-    ) / newQuantity;
-
-  await prisma.holding.update({
-
-    where: {
-      id: existingHolding.id
-    },
-
-    data: {
-
-      quantity: newQuantity,
-
-      avgBuyPrice: newAvgBuyPrice
-    }
-
-  });
-
-} else {
-
-  await prisma.holding.create({
-
-    data: {
-
-      coin,
-
-      quantity,
-
-      avgBuyPrice: coinPrice,
-
-      userId
-    }
-
-  });
-}
-
-    await prisma.transaction.create({
-      data: {
-        coin,
-        quantity,
-        price: coinPrice,
-        type: "BUY",
-        userId
-      }
+    let currentPortfolioValue = 0;
+    holdings.forEach((h) => {
+      currentPortfolioValue += h.quantity * prices[h.coin].inr;
     });
-    const updatedHoldings =
-  await prisma.holding.findMany({
-    where: {
-      userId
-    }
-  });
 
-const updatedPrices =
-  await fetchCryptoPrices();
+    const newPortfolioValue = currentPortfolioValue + totalCost;
 
-let portfolioValue = 0;
-
-updatedHoldings.forEach((holding) => {
-
-  portfolioValue +=
-    holding.quantity *
-    updatedPrices[holding.coin].inr;
-
-});
-
-await prisma.portfolioSnapshot.create({
-
-  data: {
-
-    userId,
-
-    value: portfolioValue
-
-  }
-
-});
+    // Run transaction
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { balance: userBalance - totalCost }
+      }),
+      prisma.holding.upsert({
+        where: {
+          userId_coin: {
+            userId,
+            coin: coinLower
+          }
+        },
+        update: {
+          quantity: newQuantity,
+          avgBuyPrice: newAvgBuyPrice
+        },
+        create: {
+          userId,
+          coin: coinLower,
+          quantity,
+          avgBuyPrice: coinPrice
+        }
+      }),
+      prisma.transaction.create({
+        data: {
+          userId,
+          coin: coinLower,
+          quantity,
+          price: coinPrice,
+          type: "BUY"
+        }
+      }),
+      prisma.portfolioSnapshot.create({
+        data: {
+          userId,
+          value: newPortfolioValue
+        }
+      })
+    ]);
 
     res.json({
       message: "Crypto purchased successfully"
     });
 
   } catch (error) {
-
     console.log(error);
-
     res.status(500).json({
       message: "Server error"
     });
   }
 };
+
 const sellCrypto = async (req, res) => {
-
   try {
-
     const userId = req.user.userId;
-
     const { coin, quantity } = req.body;
 
-    const holding = await prisma.holding.findFirst({
+    const ALLOWED_COINS = ["bitcoin", "ethereum", "solana"];
+    if (!coin || !ALLOWED_COINS.includes(coin.toLowerCase())) {
+      return res.status(400).json({
+        message: "Invalid coin. Supported coins are bitcoin, ethereum, solana."
+      });
+    }
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({
+        message: "Invalid quantity"
+      });
+    }
+
+    const coinLower = coin.toLowerCase();
+    const prices = await fetchCryptoPrices();
+    const coinPrice = prices[coinLower].inr;
+    const totalAmount = coinPrice * quantity;
+
+    // Fetch user and existing holding
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const existingHolding = await prisma.holding.findUnique({
       where: {
-        userId,
-        coin
+        userId_coin: {
+          userId,
+          coin: coinLower
+        }
       }
     });
 
-    if (!holding) {
-
+    if (!existingHolding) {
       return res.status(404).json({
         message: "You do not own this coin"
       });
     }
 
-    if (holding.quantity < quantity) {
-
+    if (existingHolding.quantity < quantity) {
       return res.status(400).json({
         message: "Not enough quantity to sell"
       });
     }
 
-    const prices = await fetchCryptoPrices();
+    const remainingQuantity = parseFloat(
+      (existingHolding.quantity - quantity).toFixed(8)
+    );
 
-    const coinPrice = prices[coin].inr;
-
-    const totalAmount = coinPrice * quantity;
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId
-      }
+    // Calculate current portfolio value from all holdings
+    const holdings = await prisma.holding.findMany({
+      where: { userId }
     });
 
-    await prisma.user.update({
-      where: {
-        id: userId
-      },
-      data: {
-        balance: user.balance + totalAmount
-      }
+    let currentPortfolioValue = 0;
+    holdings.forEach((h) => {
+      currentPortfolioValue += h.quantity * prices[h.coin].inr;
     });
 
-    const remainingQuantity =
-  parseFloat(
-    (holding.quantity - quantity).toFixed(8)
-  );
+    const newPortfolioValue = currentPortfolioValue - totalAmount;
+    const userBalance = Number(user.balance);
 
-    if (remainingQuantity <= 0) {
-console.log(holding);
-      await prisma.holding.delete({
-        where: {
-          id: holding.id
-        }
-      });
-
-    } else {
-
-      await prisma.holding.update({
-        where: {
-          id: holding.id
-        },
+    const operations = [
+      prisma.user.update({
+        where: { id: userId },
+        data: { balance: userBalance + totalAmount }
+      }),
+      remainingQuantity <= 0
+        ? prisma.holding.delete({
+            where: {
+              userId_coin: {
+                userId,
+                coin: coinLower
+              }
+            }
+          })
+        : prisma.holding.update({
+            where: {
+              userId_coin: {
+                userId,
+                coin: coinLower
+              }
+            },
+            data: {
+              quantity: remainingQuantity
+            }
+          }),
+      prisma.transaction.create({
         data: {
-          quantity: remainingQuantity
+          userId,
+          coin: coinLower,
+          quantity,
+          price: coinPrice,
+          type: "SELL"
         }
-      });
-    }
+      }),
+      prisma.portfolioSnapshot.create({
+        data: {
+          userId,
+          value: newPortfolioValue
+        }
+      })
+    ];
 
-    await prisma.transaction.create({
-      data: {
-        coin,
-        quantity,
-        price: coinPrice,
-        type: "SELL",
-        userId
-      }
-    });
-const updatedHoldings =
-  await prisma.holding.findMany({
-    where: {
-      userId
-    }
-  });
+    await prisma.$transaction(operations);
 
-const updatedPrices =
-  await fetchCryptoPrices();
-
-let portfolioValue = 0;
-
-updatedHoldings.forEach((holding) => {
-
-  portfolioValue +=
-    holding.quantity *
-    updatedPrices[holding.coin].inr;
-
-});
-
-await prisma.portfolioSnapshot.create({
-
-  data: {
-
-    userId,
-
-    value: portfolioValue
-
-  }
-
-});
     res.json({
       message: "Crypto sold successfully"
     });
 
   } catch (error) {
-
     console.log(error);
-
     res.status(500).json({
       message: "Server error"
     });
   }
 };
+
 const getPortfolio = async (req, res) => {
-
   try {
-
     const userId = req.user.userId;
 
     const holdings = await prisma.holding.findMany({
@@ -311,36 +282,23 @@ const getPortfolio = async (req, res) => {
     });
 
     const prices = await fetchCryptoPrices();
-
     let totalPortfolioValue = 0;
 
     const portfolio = holdings.map((holding) => {
-
-      const currentPrice =
-        prices[holding.coin].inr;
-
-      const currentValue =
-        currentPrice * holding.quantity;
-const investedValue =holding.avgBuyPrice *holding.quantity;
-
-  const profitLoss =currentValue -investedValue;
+      const currentPrice = prices[holding.coin].inr;
+      const currentValue = currentPrice * holding.quantity;
+      const investedValue = Number(holding.avgBuyPrice) * holding.quantity;
+      const profitLoss = currentValue - investedValue;
       totalPortfolioValue += currentValue;
 
       return {
         coin: holding.coin,
-
-    quantity: holding.quantity,
-
-    avgBuyPrice:
-      holding.avgBuyPrice,
-
-    currentPrice,
-
-    investedValue,
-
-    currentValue,
-
-    profitLoss
+        quantity: holding.quantity,
+        avgBuyPrice: Number(holding.avgBuyPrice),
+        currentPrice,
+        investedValue,
+        currentValue,
+        profitLoss
       };
     });
 
@@ -351,88 +309,77 @@ const investedValue =holding.avgBuyPrice *holding.quantity;
     });
 
     res.json({
-      balance: user.balance,
+      balance: Number(user.balance),
       totalPortfolioValue,
       holdings: portfolio
     });
 
   } catch (error) {
-
     console.log(error);
-
     res.status(500).json({
       message: "Server error"
     });
   }
 };
+
 const getTransactions = async (req, res) => {
-
   try {
-
     const userId = req.user.userId;
 
-    const transactions =
-      await prisma.transaction.findMany({
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
 
-        where: {
-          userId
-        },
-
-        orderBy: {
-          createdAt: "desc"
-        }
-      });
+    const formattedTransactions = transactions.map((tx) => ({
+      ...tx,
+      price: Number(tx.price)
+    }));
 
     res.json({
-      transactions
+      transactions: formattedTransactions
     });
 
   } catch (error) {
-
     console.log(error);
-
     res.status(500).json({
       message: "Server error"
     });
   }
 };
-const getPortfolioHistory = async (
-  req,
-  res
-) => {
 
+const getPortfolioHistory = async (req, res) => {
   try {
+    const userId = req.user.userId;
 
-    const userId =
-      req.user.userId;
+    const history = await prisma.portfolioSnapshot.findMany({
+      where: {
+        userId
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
 
-    const history =
-      await prisma.portfolioSnapshot.findMany({
-
-        where: {
-          userId
-        },
-
-        orderBy: {
-          createdAt: "asc"
-        }
-
-      });
+    const formattedHistory = history.map((item) => ({
+      ...item,
+      value: Number(item.value)
+    }));
 
     res.json({
-      history
+      history: formattedHistory
     });
 
   } catch (error) {
-
     console.log(error);
-
     res.status(500).json({
       message: "Server error"
     });
-
   }
-
 };
 module.exports = {
   getPrices,
